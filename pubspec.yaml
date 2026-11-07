@@ -1,0 +1,20 @@
+name: talking_reminder
+description: Smart Talking Reminder & To-Do list — reminders spoken aloud with your phone's voice.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+# No third-party packages: speech, alarms, notifications and storage are implemented
+# natively in android/app/src/main/kotlin and reached through one method channel.
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

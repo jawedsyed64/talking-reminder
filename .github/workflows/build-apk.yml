@@ -1,0 +1,65 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate standard Flutter Android files (existing files are kept)
+        run: flutter create --platforms=android --org com.talkingreminder --project-name talking_reminder .
+
+      - name: Set minimum Android version and signing key
+        run: python3 tool/patch_android.py
+
+      - run: flutter pub get
+
+      - name: Check code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --release --build-name=1.0.${{ github.run_number }} --build-number=${{ github.run_number }}
+
+      - name: Rename APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk TalkingReminder.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TalkingReminder-apk
+          path: TalkingReminder.apk
+
+      - name: Publish download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Talking Reminder 1.0.${{ github.run_number }}
+          body: |
+            Open this page on your Android phone and tap **TalkingReminder.apk** to download and install it.
+          files: TalkingReminder.apk
+          make_latest: true
